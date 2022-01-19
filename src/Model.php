@@ -237,7 +237,7 @@ class Model implements \ArrayAccess
 			}
 			$where_str = implode(" and ", $where_str);
 			
-			$item = $db->query("select * from `" . static::getTableName() . "` where `" . $where_str, $where);
+			$item = $db->get_row("select * from `" . static::getTableName() . "` where " . $where_str, $where);
 			$item = static::from_database($item);
 		}
 		
@@ -284,7 +284,7 @@ class Model implements \ArrayAccess
 	}
 	public function set($key, $value)
 	{
-		if ($this->__new_data)
+		if (!$this->__new_data)
 		{
 			$this->__new_data = [];
 		}
