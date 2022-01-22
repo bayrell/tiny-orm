@@ -386,7 +386,7 @@ class MySQLConnection extends Connection
 					$alias_name = $join["alias_name"];
 					$where = $join["where"];
 					
-					if (kind == "left") $sql .= " LEFT JOIN ";
+					if ($kind == "left") $sql .= " LEFT JOIN ";
 					else $sql .= " INNER JOIN ";
 					
 					$sql .= $this->prefix . $table_name;

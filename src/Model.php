@@ -166,9 +166,9 @@ class Model implements \ArrayAccess
 	/**
 	 * Return item by id
 	 */
-	static function getById($id)
+	static function getById($id, $connection_name = "default")
 	{
-		$db = app("db");
+		$db = app("db")->get($connection_name);
 		
 		$pk = static::firstPk();
 		if ($pk == null) return null;
@@ -176,7 +176,7 @@ class Model implements \ArrayAccess
 		$arr = [];
 		$arr[$pk] = $id;
 		
-		$item = $db->query("select * from `" . static::getTableName() . "` where `" . $pk . "`=:" . $pk, $arr);
+		$item = $db->get_row("select * from `" . static::getTableName() . "` where `" . $pk . "`=:" . $pk, $arr);
 		
 		if ($item)
 		{
@@ -357,6 +357,19 @@ class Model implements \ArrayAccess
 		return $this->__new_data ? $this->__new_data : [];
 	}
 	
+	
+	
+	/**
+	 * List to array
+	 */
+	static function listToArray($items)
+	{
+		return array_map
+		(
+			function ($model){ return ($model instanceof Model) ? $model->toArray() : $model; },
+			$items
+		);
+	}
 	
 	
 	/**

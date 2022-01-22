@@ -42,7 +42,7 @@ class Query
 	public $_model_class_name = "";
 	public $_kind = "";
 	public $_table_name = "";
-	public $_table_name_alias = "";
+	public $_table_name_alias = "t";
 	public $_fields = null;
 	public $_join = null;
 	public $_order = null;
@@ -118,7 +118,7 @@ class Query
 	/**
 	 * Select query
 	 */
-	function select($table_name, $alias_name = "")
+	function select($table_name, $alias_name = "t")
 	{
 		$this->_kind = static::QUERY_SELECT;
 		$this->_fields = ["*"];
