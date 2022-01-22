@@ -137,6 +137,33 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Query to dabase
+	 */
+	static function query($connection_name = "default")
+	{
+		$q = (new Query())
+			->connect($connection_name)
+			->model( static::class )
+		;
+		return $q;
+	}
+	
+	
+	
+	/**
+	 * Query to dabase
+	 */
+	static function select($connection_name = "default")
+	{
+		$q = static::query($connection_name)
+			->kind(Query::QUERY_SELECT)
+		;
+		return $q;
+	}
+	
+	
+	
+	/**
 	 * Return item by id
 	 */
 	static function getById($id)
@@ -167,11 +194,29 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Find or create
+	 */
+	static function findOrCreate($filter, $connection_name = "default")
+	{
+		$item = static::select($connection_name)
+			->filter($filter)
+			->one()
+		;
+		if ($item == null)
+		{
+			$item = static::Instance();
+		}
+		return $item;
+	}
+	
+	
+	
+	/**
 	 * Save to database
 	 */
-	function save()
+	function save($connection_name = "default")
 	{
-		$db = app("db");
+		$db = app("db")->get($connection_name);
 		
 		$is_update = $this->__old_data != null;
 		
@@ -203,7 +248,7 @@ class Model implements \ArrayAccess
 			
 			if (static::isAutoIncrement())
 			{
-				$id = $db->insert_id();
+				$id = $db->lastInsertId();
 				
 				$pk = static::firstPk();
 				if ($pk != null)
@@ -221,9 +266,9 @@ class Model implements \ArrayAccess
 	/**
 	 * Refresh model from database by id
 	 */
-	function refresh()
+	function refresh($connection_name = "default")
 	{
-		$db = app("db");
+		$db = app("db")->get($connection_name);
 		
 		$item = null;
 		$where = static::getPrimaryData($this->__old_data);

@@ -29,74 +29,28 @@
 namespace TinyORM;
 
 
-class Connection
+class ConnectionList
 {
+	public $connections = [];
 	
-	public $host = "";
-	public $port = "";
-	public $login = "";
-	public $password = "";
-	public $database = "";
-	public $prefix = "";
-	public $connect_error = "";
-	public $pdo = null;
-	public $debug = false;
 	
 	
 	/**
-	 * Connect
+	 * Add connection
 	 */
-	function connect()
+	function add($connection_name, $connection)
 	{
+		$this->connections[$connection_name] = $connection;
 	}
 	
 	
 	
 	/**
-	 * Connect
+	 * Returns connection
 	 */
-	function isConnected()
+	function get($connection_name = "default")
 	{
-		return false;
+		return isset($this->connections[$connection_name]) ? $this->connections[$connection_name] : null;
 	}
 	
-	
-	
-	/**
-	 * Get sql
-	 */
-	function getSQL($sql, $arr = [])
-	{
-		$search = array_keys($arr);
-		$search = array_map( function($key){ return ":" . $key; }, $search );
-		
-		$replace = array_values($arr);
-		$replace = array_map( function($value){
-			$value = $this->pdo->quote($value);
-			return $value;
-		}, $replace );
-		
-		$sql = str_replace($search, $replace, $sql);
-		return $sql;
-	}
-	
-	
-	
-	/**
-	 * Quote
-	 */
-	function quote($item)
-	{
-		return $this->pdo->quote($item);
-	}
-	
-	
-	
-	/**
-	 * Escape
-	 */
-	function escape($item)
-	{
-		return $item;
-	}
 }
