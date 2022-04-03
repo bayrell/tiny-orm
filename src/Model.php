@@ -137,6 +137,18 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Create Instance of class
+	 */
+	static function InstanceFromDatabase($data = null)
+	{
+		$data = static::from_database($data);
+		$item = static::Instance($data);
+		return $item;
+	}
+	
+	
+	
+	/**
 	 * Query to dabase
 	 */
 	static function query($connection_name = "default")
@@ -173,10 +185,12 @@ class Model implements \ArrayAccess
 		$pk = static::firstPk();
 		if ($pk == null) return null;
 		
-		$arr = [];
-		$arr[$pk] = $id;
+		$query = static::select()
+			->addFilter($pk, "=", $id)
+			->limit(1)
+		;
 		
-		$item = $db->get_row("select * from `" . static::getTableName() . "` where `" . $pk . "`=:" . $pk, $arr);
+		$item = $query->one();
 		
 		if ($item)
 		{

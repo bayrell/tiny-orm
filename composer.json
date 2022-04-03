@@ -1,0 +1,16 @@
+{
+    "name": "tiny-php/orm",
+    "type": "library",
+    "description": "TinyPHP Framework. ORM library",
+    "keywords": ["tiny-php"],
+    "homepage": "https://github.com/tiny-php/orm",
+    "license": "MIT",
+	"autoload": {
+		"psr-4": {
+			"TinyORM\\": "src"
+		}
+	},
+    "require": {
+        "tiny-php/core": "^1.0"
+    }
+}

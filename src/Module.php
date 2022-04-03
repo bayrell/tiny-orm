@@ -50,11 +50,19 @@ class Module
 		$defs = $res->defs;
 		
 		/* Setup default db connection */
-		$res["db_connection_list"] = DI\create(\TinyORM\ConnectionList::class);
-		$res["db_connection"] = DI\create(\TinyORM\MySQLConnection::class);
+		$defs["db_connection_list"] = \DI\create(\TinyORM\ConnectionList::class);
+		$defs["db_connection"] = \DI\create(\TinyORM\MySQLConnection::class);
+		
+		/* Get default connection */
+		$defs["db"] =
+			function ()
+			{
+				$db_list = app("db_connection_list");
+				return $db_list->get("default");
+			};
 		
 		/* Connect to database */
-		$res["connectToDatabase"] =
+		$defs["connectToDatabase"] =
 			function ()
 			{
 				$conn = make("db_connection");

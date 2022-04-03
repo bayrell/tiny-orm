@@ -29,29 +29,31 @@
 namespace TinyORM;
 
 
-class ConnectionList
+class SQLiteConnection extends MySQLConnection
 {
-	public $connections = [];
-	
-	
-	
-	/**
-	 * Add connection
+    var $database = null;
+    
+    
+    /**
+	 * Connect
 	 */
-	function add($connection_name, $connection)
+	function connect()
 	{
-		$this->connections[$connection_name] = $connection;
+		$this->connect_error = "";
+		try
+		{
+			$str = 'sqlite:'.$this->database;
+			$this->pdo = new \PDO($str);
+			$this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+		}
+		catch (\PDOException $e)
+		{
+			$this->connect_error = 'Failed connected to database!';
+		}
+		catch (\Excepion $e)
+		{
+			$this->connect_error = $e->getMessage();
+		}
 	}
-	
-	
-	
-	/**
-	 * Returns connection
-	 */
-	function get($connection_name = "default")
-	{
-		return isset($this->connections[$connection_name]) ?
-			$this->connections[$connection_name] : null;
-	}
-	
+    
 }
