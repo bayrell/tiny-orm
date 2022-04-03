@@ -68,6 +68,16 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Returns true if need to update timestamp
+	 */
+	static function updateTimestamp()
+	{
+		return false;
+	}
+	
+	
+	
+	/**
 	 * Return primary key
 	 */
 	static function getPrimaryData($arr)
@@ -106,7 +116,7 @@ class Model implements \ArrayAccess
 	/**
 	 * To database
 	 */
-	static function to_database($data)
+	static function to_database($data, $is_update)
 	{
 		return $data;
 	}
@@ -168,6 +178,7 @@ class Model implements \ArrayAccess
 	static function select($connection_name = "default")
 	{
 		$q = static::query($connection_name)
+			->model(static::class)
 			->kind(Query::QUERY_SELECT)
 		;
 		return $q;
@@ -180,7 +191,7 @@ class Model implements \ArrayAccess
 	 */
 	static function getById($id, $connection_name = "default")
 	{
-		$db = app("db")->get($connection_name);
+		$db = app("db_connection_list")->get($connection_name);
 		
 		$pk = static::firstPk();
 		if ($pk == null) return null;
@@ -230,18 +241,27 @@ class Model implements \ArrayAccess
 	 */
 	function save($connection_name = "default")
 	{
-		$db = app("db")->get($connection_name);
+		$db = app("db_connection_list")->get($connection_name);
 		
-		$is_update = $this->__old_data != null;
+		$is_update = $this->isUpdate();
 		
-		$new_data = static::to_database($this->__new_data);
+		$new_data = static::to_database($this->__new_data, $is_update);
 		
 		/* Update */
 		if ($is_update)
 		{
-			$where = static::getPrimaryData($this->__old_data);
-			if ($where)
+			$primary_data = static::getPrimaryData($this->__old_data);
+			if ($primary_data)
 			{
+				$where = [];
+				foreach ($primary_data as $key => $value)
+				{
+					$where[] = [ $key, "=", $value ];
+				}
+				if (static::updateTimestamp())
+				{
+					$new_data["gmtime_updated"] = gmdate("Y-m-d H:i:s", time());
+				}
 				$db->update
 				(
 					static::getTableName(),
@@ -254,6 +274,12 @@ class Model implements \ArrayAccess
 		/* Insert */
 		else
 		{
+			if (static::updateTimestamp())
+			{
+				$new_data["gmtime_created"] = gmdate("Y-m-d H:i:s", time());
+				$new_data["gmtime_updated"] = gmdate("Y-m-d H:i:s", time());
+			}
+			
 			$db->insert
 			(
 				static::getTableName(),
@@ -273,6 +299,30 @@ class Model implements \ArrayAccess
 		}
 		
 		$this->setNewData($this->__new_data);
+		
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Delete item
+	 */
+	function delete($connection_name = "default")
+	{
+		$db = app("db_connection_list")->get($connection_name);
+		$primary_data = static::getPrimaryData($this->__old_data);
+		if ($primary_data)
+		{
+			$where = [];
+			foreach ($primary_data as $key => $value)
+			{
+				$where[] = [ $key, "=", $value ];
+			}
+			$db->delete(static::getTableName(), $where);
+		}
+		
+		return $this;
 	}
 	
 	
@@ -282,25 +332,29 @@ class Model implements \ArrayAccess
 	 */
 	function refresh($connection_name = "default")
 	{
-		$db = app("db")->get($connection_name);
+		$db = app("db_connection_list")->get($connection_name);
 		
 		$item = null;
 		$where = static::getPrimaryData($this->__old_data);
 		
 		if ($where)
 		{
-			$where_str = [];
+			$filter = [];
 			foreach ($where as $key => $value)
 			{
-				$where_str[] = "`" . $key . "` = :" . $key;
+				$filter[] = [$key, "=", $value];
 			}
-			$where_str = implode(" and ", $where_str);
 			
-			$item = $db->get_row("select * from `" . static::getTableName() . "` where " . $where_str, $where);
+			$item = static::select()
+				->where($filter)
+				->one(true)
+			;
 			$item = static::from_database($item);
 		}
 		
 		$this->setNewData($item);
+		
+		return $this;
 	}
 	
 	
@@ -309,6 +363,16 @@ class Model implements \ArrayAccess
 	 * Returns true if data has loaded from database
 	 */
 	function hasLoaded()
+	{
+		return $this->__old_data ? true : false;
+	}
+	
+	
+	
+	/**
+	 * Returns true if data has loaded from database
+	 */
+	function isUpdate()
 	{
 		return $this->__old_data ? true : false;
 	}
@@ -335,11 +399,13 @@ class Model implements \ArrayAccess
 	 */
 	public function get($key, $value = null)
 	{
-		return $this->__new_data && isset($this->__new_data[$key]) ? $this->__new_data[$key] : $value;
+		return $this->__new_data &&
+			isset($this->__new_data[$key]) ? $this->__new_data[$key] : $value;
 	}
 	public function getOld($key, $value = null)
 	{
-		return $this->__old_data && isset($this->__old_data[$key]) ? $this->__old_data[$key] : $value;
+		return $this->__old_data &&
+			isset($this->__old_data[$key]) ? $this->__old_data[$key] : $value;
 	}
 	public function set($key, $value)
 	{

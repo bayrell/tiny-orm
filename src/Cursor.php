@@ -62,8 +62,7 @@ class Cursor
 		if ($row && $this->query && $this->query->_model_class_name && !$is_raw)
 		{
 			$class_name = $this->query->_model_class_name;
-			$row = $class_name::from_database($row);
-			$row = $class_name::Instance($row);
+			$row = $class_name::InstanceFromDatabase($row);
 		}
 		
 		return $row;

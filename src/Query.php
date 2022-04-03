@@ -86,8 +86,15 @@ class Query
 	 */
 	function model($class_name)
 	{
-		$this->_model_class_name = $class_name;
-		$this->_table_name = $class_name::getTableName();
+		if ($class_name == null)
+		{
+			$this->_model_class_name = null;
+		}
+		else
+		{
+			$this->_model_class_name = $class_name;
+			$this->_table_name = $class_name::getTableName();
+		}
 		return $this;
 	}
 	
@@ -166,10 +173,10 @@ class Query
 	/**
 	 * Set offset
 	 */
-	function offset($start, $limit)
+	function offset($start, $limit = null)
 	{
 		$this->_start = $start;
-		$this->_limit = $limit;
+		if ($limit !== null) $this->_limit = $limit;
 		return $this;
 	}
 	
@@ -203,6 +210,17 @@ class Query
 	function orderBy($order)
 	{
 		$this->_order = $order;
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Set filter
+	 */
+	function where($filter)
+	{
+		$this->_filter = $filter;
 		return $this;
 	}
 	
@@ -280,7 +298,7 @@ class Query
 	 */
 	function connect($connection_name = "default")
 	{
-		$this->_connection = app("db")->get($connection_name);
+		$this->_connection = app("db_connection_list")->get($connection_name);
 		return $this;
 	}
 	
@@ -322,6 +340,24 @@ class Query
 		$items = $cursor->fetchAll($is_raw);
 		$cursor->close();
 		return $items;
+	}
+	
+	
+	
+	/**
+	 * Returns count
+	 */
+	function count()
+	{
+		$q = clone $this;
+		$row = $q
+			// ->debug(true)
+			->limit(-1)->start(0)
+			->fields([ "count(*) as c" ])
+			->one(true)
+		;
+		if ($row) return $row["c"];
+		return 0;
 	}
 	
 }

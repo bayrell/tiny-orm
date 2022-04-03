@@ -92,7 +92,6 @@ class MySQLConnection extends Connection
 	 */
 	function query($sql, $arr = [])
 	{
-		
 		if ($this->debug)
 		{
 			$sql = static::getSQL($sql, $arr);
@@ -103,6 +102,17 @@ class MySQLConnection extends Connection
 		$st->execute($arr);
 		
 		return $st;
+	}
+	
+	
+	
+	/**
+	 * Execute sql query
+	 */
+	function execute($sql, $arr = [])
+	{
+		$st = $this->query($sql, $arr);
+		$st->closeCursor();
 	}
 	
 	
@@ -151,7 +161,7 @@ class MySQLConnection extends Connection
 	function update($table_name, $where, $update)
 	{
 		$args = [];
-	
+		
 		/* Build update */
 		$update_arr = [];
 		foreach ($update as $key => $value)
@@ -162,20 +172,9 @@ class MySQLConnection extends Connection
 		$update_str = implode(", ", $update_arr);
 		
 		/* Build where */
-		$where_arr = [];
-		foreach ($where as $key => $value)
-		{
-			if ($value == null)
-			{
-				$where_arr[] = "`" . $key . "` is null";
-			}
-			else
-			{
-				$where_arr[] = "`" . $key . "` = :_where_" . $key;
-				$args["_where_" . $key] = $where[$key];
-			}
-		}
-		$where_str = implode(" and ", $where_arr);
+		$res = $this->convertFilter($where);
+		$where_str = implode(" AND ", $res[0]);
+		$args = array_merge($args, $res[1]);
 		
 		/* Build sql */
 		$sql = "update $table_name set $update_str where $where_str";
@@ -229,23 +228,18 @@ class MySQLConnection extends Connection
 	/**
 	 * Insert or update
 	 **/
-	function insert_or_update($table_name, $search, $insert, $update = null)
+	function insert_or_update($table_name, $search, $insert, $update = null, $pk="id")
 	{
 		if ($update == null) $update = $insert;
 		
-		$where = array_map
-		(
-			function ($item)
-			{
-				return "`" . $item . "` = :" . $item;
-			},
-			array_keys($search)
-		);
-		$where_str = implode(" and ", $where);
+		/* Build where */
+		$res = $this->convertFilter($where);
+		$where_str = implode(" AND ", $res[0]);
+		$where_args = array_merge($params, $res[1]);
 		
 		/* Find item */
 		$sql = "select * from $table_name where $where_str limit 1";
-		$item = $this->get_row($sql, $search);
+		$item = $this->get_row($sql, $where_args);
 		$item_id = 0;
 		
 		/* Insert item */
@@ -262,23 +256,40 @@ class MySQLConnection extends Connection
 			(
 				$table_name,
 				[
-					"id" => $item["id"],
+					[ $pk, "=", $item[$pk] ],
 				],
 				$update,
 			);
-			$item_id = $item["id"];
+			$item_id = $item[$pk];
 		}
 		
 		/* Find item by id */
 		$item = $this->get_row
 		(
-			"select * from $table_name where id=:id limit 1",
+			"select * from $table_name where $pk=:id limit 1",
 			[
-				"id" => $item_id,
+				$pk => $item_id,
 			]
 		);
 		
 		return $item;
+	}
+	
+	
+	
+	/**
+	 * Delete item
+	 */
+	function delete($table_name, $where)
+	{
+		/* Build where */
+		$res = $this->convertFilter($where);
+		$where_str = implode(" AND ", $res[0]);
+		$where_args = $res[1];
+		
+		/* Delete item */
+		$sql = "delete from $table_name where $where_str limit 1";
+		$this->execute($sql, $where_args);
 	}
 	
 	
@@ -500,7 +511,9 @@ class MySQLConnection extends Connection
 					$arr_where = [];
 					foreach ($op as $or)
 					{
-						list($where_or, $items_or, $field_index) = $this->convertFilter($or, $field_index);
+						list($where_or, $items_or, $field_index) =
+							$this->convertFilter($or, $field_index)
+						;
 						$arr_where[] = implode(" AND ", $where_or);
 						$params = array_merge($params, $items_or);
 					}
