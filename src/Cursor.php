@@ -103,7 +103,7 @@ class Cursor
 	 */
 	function close()
 	{
-		$this->st->closeCursor();
+		if ($this->st) $this->st->closeCursor();
 		$this->st = null;
 	}
 	

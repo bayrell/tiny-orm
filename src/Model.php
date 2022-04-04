@@ -34,6 +34,7 @@ class Model implements \ArrayAccess
 	
 	public $__old_data = null;
 	public $__new_data = [];
+	public $__is_dirty = false;
 	
 	
 	
@@ -175,11 +176,49 @@ class Model implements \ArrayAccess
 	/**
 	 * Query to dabase
 	 */
-	static function select($connection_name = "default")
+	static function selectQuery($connection_name = "default")
 	{
 		$q = static::query($connection_name)
-			->model(static::class)
 			->kind(Query::QUERY_SELECT)
+		;
+		return $q;
+	}
+	
+	
+	
+	/**
+	 * Update model
+	 */
+	static function updateQuery($connection_name = "default")
+	{
+		$q = static::query($connection_name)
+			->kind(Query::QUERY_UPDATE)
+		;
+		return $q;
+	}
+	
+	
+	
+	/**
+	 * Insert data
+	 */
+	static function insertQuery($connection_name = "default")
+	{
+		$q = static::query($connection_name)
+			->kind(Query::QUERY_INSERT)
+		;
+		return $q;
+	}
+	
+	
+	
+	/**
+	 * Delete data
+	 */
+	static function deleteQuery($connection_name = "default")
+	{
+		$q = static::query($connection_name)
+			->kind(Query::QUERY_DELETE)
 		;
 		return $q;
 	}
@@ -345,7 +384,7 @@ class Model implements \ArrayAccess
 				$filter[] = [$key, "=", $value];
 			}
 			
-			$item = static::select()
+			$item = static::selectQuery()
 				->where($filter)
 				->one(true)
 			;
@@ -380,10 +419,21 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Returns true if model is changed
+	 */
+	function isDirty()
+	{
+		return $this->__is_dirty;
+	}
+	
+	
+	
+	/**
 	 * Set new data
 	 */
 	function setNewData($data)
 	{
+		$this->__is_dirty = false;
 		$this->__old_data = $data;
 		$this->__new_data = $data;
 		if ($this->__new_data == null)
@@ -413,6 +463,10 @@ class Model implements \ArrayAccess
 		{
 			$this->__new_data = [];
 		}
+		
+		if (!isset($this->__new_data[$key])) $this->__is_dirty = true;
+		else if ($this->__new_data[$key] != $value) $this->__is_dirty = true;
+		
 		$this->__new_data[$key] = $value;
 	}
 	public function exists($key)

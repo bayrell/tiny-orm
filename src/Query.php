@@ -54,6 +54,7 @@ class Query
 	public $_log = false;
 	public $_sql = "";
 	public $_params = [];
+	public $_values = [];
 	
 	
 	
@@ -125,12 +126,54 @@ class Query
 	/**
 	 * Select query
 	 */
-	function select($table_name, $alias_name = "t")
+	function select($table_name)
 	{
 		$this->_kind = static::QUERY_SELECT;
 		$this->_fields = ["*"];
 		$this->_table_name = $table_name;
-		$this->_table_name_alias = $alias_name;
+		$this->_table_name_alias = "t";
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Insert query
+	 */
+	function insert($table_name, $values = [])
+	{
+		$this->_kind = static::QUERY_INSERT;
+		$this->_values = $values;
+		$this->_table_name = $table_name;
+		$this->_table_name_alias = "t";
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Select query
+	 */
+	function update($table_name, $values = [])
+	{
+		$this->_kind = static::QUERY_UPDATE;
+		$this->_values = $values;
+		$this->_table_name = $table_name;
+		$this->_table_name_alias = "t";
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Delete query
+	 */
+	function delete($table_name)
+	{
+		$this->_kind = static::QUERY_DELETE;
+		$this->_values = $values;
+		$this->_table_name = $table_name;
+		$this->_table_name_alias = "t";
 		return $this;
 	}
 	
@@ -153,6 +196,17 @@ class Query
 	function fields($fields)
 	{
 		$this->_fields = $fields;
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Set values
+	 */
+	function values($values = [])
+	{
+		$this->_values = $values;
 		return $this;
 	}
 	
@@ -305,15 +359,64 @@ class Query
 	
 	
 	/**
+	 * Set connection
+	 */
+	function setConnection($conn)
+	{
+		$this->_connection = $conn;
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Execute query
+	 */
+	function query()
+	{
+		$conn = null;
+		
+		if ($this->_connection) $conn = $this->_connection;
+		else $conn = app("db");
+		
+		if (!$conn) return null;
+		
+		return $conn->executeQuery($this);
+	}
+	
+	
+	
+	/**
 	 * Execute query
 	 */
 	function execute()
 	{
-		if ($this->_connection)
+		$cursor = $this->query();
+		if ($cursor)
 		{
-			return $this->_connection->executeQuery($this);
+			$cursor->close();
 		}
-		return app("db")->get("default")->executeQuery($this);
+	}
+	
+	
+	
+	/**
+	 * Returns sql
+	 */
+	function getSQL()
+	{
+		$conn = null;
+		
+		if ($this->_connection) $conn = $this->_connection;
+		else $conn = app("db");
+		
+		if (!$conn) return null;
+		
+		$res = $conn->buildSQL($q);
+		if (!$res) return null;
+		
+		list($sql, $params) = $res;
+		return $conn->getSQL($sql, $params);
 	}
 	
 	
@@ -323,7 +426,8 @@ class Query
 	 */
 	function one($is_raw = false)
 	{
-		$cursor = $this->execute();
+		$cursor = $this->query();
+		if (!$cursor) return null;
 		$item = $cursor->fetch($is_raw);
 		$cursor->close();
 		return $item;
@@ -336,7 +440,8 @@ class Query
 	 */
 	function all($is_raw = false)
 	{
-		$cursor = $this->execute();
+		$cursor = $this->query();
+		if (!$cursor) return [];
 		$items = $cursor->fetchAll($is_raw);
 		$cursor->close();
 		return $items;

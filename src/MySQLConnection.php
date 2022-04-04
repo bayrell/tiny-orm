@@ -94,7 +94,7 @@ class MySQLConnection extends Connection
 	{
 		if ($this->debug)
 		{
-			$sql = static::getSQL($sql, $arr);
+			$sql = $this->getSQL($sql, $arr);
 			echo $sql . "\n";
 		}
 		
@@ -135,22 +135,12 @@ class MySQLConnection extends Connection
 	 */
 	function insert($table_name, $data)
 	{
-		$keys = [];
-		$values = [];
-		foreach ($data as $key => $val)
-		{
-			$keys[] = "`" . $key . "`";
-			$values[] = ":" . $key;
-		}
-		
-		/* Build sql */
-		$sql = "insert into " . $table_name . 
-			" (" . implode(",",$keys) . ") values (" . implode(",",$values) . ")"
+		$q = (new Query())
+			->insert($table_name)
+			->values($data)
+			->setConnection($this)
+			->execute()
 		;
-		
-		/* Run query */
-		$st = $this->query($sql, $data);
-		return $st;
 	}
 	
 	
@@ -160,28 +150,13 @@ class MySQLConnection extends Connection
 	 */
 	function update($table_name, $where, $update)
 	{
-		$args = [];
-		
-		/* Build update */
-		$update_arr = [];
-		foreach ($update as $key => $value)
-		{
-			$update_arr[] = "`" . $key . "` = :_update_" . $key;
-			$args["_update_" . $key] = $value;
-		}
-		$update_str = implode(", ", $update_arr);
-		
-		/* Build where */
-		$res = $this->convertFilter($where);
-		$where_str = implode(" AND ", $res[0]);
-		$args = array_merge($args, $res[1]);
-		
-		/* Build sql */
-		$sql = "update $table_name set $update_str where $where_str";
-		
-		/* Run query */
-		$st = $this->query($sql, $args);
-		return $st;
+		$q = (new Query())
+			->update($table_name)
+			->values($update)
+			->where($where)
+			->setConnection($this)
+			->execute();
+		;
 	}
 	
 	
@@ -282,14 +257,12 @@ class MySQLConnection extends Connection
 	 */
 	function delete($table_name, $where)
 	{
-		/* Build where */
-		$res = $this->convertFilter($where);
-		$where_str = implode(" AND ", $res[0]);
-		$where_args = $res[1];
-		
-		/* Delete item */
-		$sql = "delete from $table_name where $where_str limit 1";
-		$this->execute($sql, $where_args);
+		$q = (new Query())
+			->delete($table_name)
+			->where($where)
+			->setConnection($this)
+			->execute()
+		;
 	}
 	
 	
@@ -360,7 +333,7 @@ class MySQLConnection extends Connection
 	/**
 	 * Returns query sql
 	 */
-	function getQuerySQL($q)
+	function buildSQL($q)
 	{
 		/* Select query */
 		if ($q->_kind == Query::QUERY_SELECT)
@@ -439,7 +412,62 @@ class MySQLConnection extends Connection
 			return [$sql, $params];
 		}
 		
-		else if ($q->_kind == Query::RAW_QUERY)
+		else if ($q->_kind == Query::QUERY_INSERT)
+		{
+			$keys = [];
+			$values = [];
+			foreach ($q->_values as $key => $val)
+			{
+				$keys[] = "`" . $key . "`";
+				$values[] = ":" . $key;
+			}
+			
+			/* Build sql */
+			$sql = "insert into " . $q->_table_name . 
+				" (" . implode(",",$keys) . ") values (" . implode(",",$values) . ")"
+			;
+			
+			return [$sql, $q->_values];
+		}
+		
+		else if ($q->_kind == Query::QUERY_UPDATE)
+		{
+			$args = [];
+			
+			/* Build update */
+			$update_arr = [];
+			foreach ($q->_values as $key => $value)
+			{
+				$update_arr[] = "`" . $key . "` = :_update_" . $key;
+				$args["_update_" . $key] = $value;
+			}
+			$update_str = implode(", ", $update_arr);
+			
+			/* Build where */
+			$res = $this->convertFilter($q->_filter);
+			$where_str = implode(" AND ", $res[0]);
+			$args = array_merge($args, $res[1]);
+			
+			/* Build sql */
+			$sql = "update " . $q->_table_name . " set $update_str where $where_str";
+			
+			return [$sql, $args];
+		}
+		
+		else if ($q->_kind == Query::QUERY_DELETE)
+		{
+			/* Build where */
+			$res = $this->convertFilter($q->_filter);
+			$where_str = implode(" AND ", $res[0]);
+			$where_args = $res[1];
+			
+			/* Delete item */
+			$sql = "delete from " . $q->_table_name . " where " . $where_str . " limit 1";
+			
+			return [$sql, $where_args];
+		}
+		
+		else if ($q->_kind == Query::QUERY_RAW)
 		{
 			return [$q->_sql, $q->_params];
 		}
@@ -454,32 +482,28 @@ class MySQLConnection extends Connection
 	 */
 	function executeQuery($q)
 	{
-		$res = $this->getQuerySQL($q);
-		if ($res != null)
+		$res = $this->buildSQL($q);
+		if ($res == null) return null;
+		
+		list($sql, $params) = $res;
+		
+		/* Create cursor */
+		$cursor = new Cursor();
+		$cursor->connection = $this;
+		$cursor->query = $q;
+		$cursor->sql = $sql;
+		$cursor->params = $params;
+		
+		/* Log sql */
+		if ($q->_log)
 		{
-			$sql = $res[0];
-			$params = $res[1];
-			
-			/* Create cursor */
-			$cursor = new Cursor();
-			$cursor->connection = $this;
-			$cursor->query = $q;
-			$cursor->sql = $sql;
-			$cursor->params = $params;
-			
-			/* Log sql */
-			if ($q->_log)
-			{
-				echo $cursor->getSQL() . "\n";
-			}
-			
-			/* Execute */
-			$cursor->st = $this->query($sql, $params);
-			
-			return $cursor;
+			echo $this->getSQL($sql, $params) . "\n";
 		}
 		
-		return null;
+		/* Execute */
+		$cursor->st = $this->query($sql, $params);
+		
+		return $cursor;
 	}
 	
 	
