@@ -235,22 +235,12 @@ class Model implements \ArrayAccess
 		$pk = static::firstPk();
 		if ($pk == null) return null;
 		
-		$query = static::select()
+		$query = static::selectQuery()
 			->addFilter($pk, "=", $id)
 			->limit(1)
 		;
 		
 		$item = $query->one();
-		
-		if ($item)
-		{
-			$item = static::from_database($item);
-			$item = static::Instance($item);
-		}
-		else
-		{
-			$item = null;
-		}
 		
 		return $item;
 	}
