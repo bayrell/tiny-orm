@@ -399,6 +399,16 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Returns true if object is new
+	 */
+	function isNew()
+	{
+		return $this->__old_data ? false : true;
+	}
+	
+	
+	
+	/**
 	 * Returns true if data has loaded from database
 	 */
 	function isUpdate()

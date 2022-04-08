@@ -302,6 +302,16 @@ class Query
 	
 	
 	
+	/**
+	 * Add where
+	 */
+	function addWhere($key, $op, $value)
+	{
+		$this->_filter[] = [$key, $op, $value];
+		return $this;
+	}
+	
+	
 	
 	/**
 	 * Inner join
