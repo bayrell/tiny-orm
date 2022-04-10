@@ -261,9 +261,9 @@ class Query
 	/**
 	 * Set order
 	 */
-	function orderBy($order)
+	function orderBy($name, $sort)
 	{
-		$this->_order = $order;
+		$this->_order[] = [$name, $sort];
 		return $this;
 	}
 	

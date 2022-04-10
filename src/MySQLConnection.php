@@ -399,7 +399,13 @@ class MySQLConnection extends Connection
 			/* Add order */
 			if ($q->_order != null)
 			{
-				$sql .= " ORDER BY " . $q->_order;
+				$order = array_map
+				(
+					function($item){ return $item[0] . " " . $item[1]; },
+					$q->_order
+				);
+				
+				$sql .= " ORDER BY " . implode(",", $order);
 				
 				/* New line */
 				$sql .= "\n";
