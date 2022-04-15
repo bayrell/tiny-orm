@@ -167,6 +167,7 @@ class Model implements \ArrayAccess
 		$q = (new Query())
 			->connect($connection_name)
 			->model( static::class )
+			->fields(["t.*"])
 		;
 		return $q;
 	}
@@ -273,30 +274,33 @@ class Model implements \ArrayAccess
 		$db = app("db_connection_list")->get($connection_name);
 		
 		$is_update = $this->isUpdate();
-		
-		$new_data = static::to_database($this->__new_data, $is_update);
+		$new_data = $this->getUpdatedData();
+		$new_data = static::to_database($new_data, $is_update);
 		
 		/* Update */
 		if ($is_update)
 		{
-			$primary_data = static::getPrimaryData($this->__old_data);
-			if ($primary_data)
+			if (count($new_data) > 0)
 			{
-				$where = [];
-				foreach ($primary_data as $key => $value)
+				$primary_data = static::getPrimaryData($this->__old_data);
+				if ($primary_data)
 				{
-					$where[] = [ $key, "=", $value ];
+					$where = [];
+					foreach ($primary_data as $key => $value)
+					{
+						$where[] = [ $key, "=", $value ];
+					}
+					if (static::updateTimestamp())
+					{
+						$new_data["gmtime_updated"] = gmdate("Y-m-d H:i:s", time());
+					}
+					$db->update
+					(
+						static::getTableName(),
+						$where,
+						$new_data
+					);
 				}
-				if (static::updateTimestamp())
-				{
-					$new_data["gmtime_updated"] = gmdate("Y-m-d H:i:s", time());
-				}
-				$db->update
-				(
-					static::getTableName(),
-					$where,
-					$new_data
-				);
 			}
 		}
 		
@@ -327,7 +331,8 @@ class Model implements \ArrayAccess
 			}
 		}
 		
-		$this->setNewData($this->__new_data);
+		$this->refresh();
+		// $this->setNewData($this->__new_data);
 		
 		return $this;
 	}
@@ -439,6 +444,72 @@ class Model implements \ArrayAccess
 		if ($this->__new_data == null)
 		{
 			$this->__new_data = [];
+		}
+	}
+	
+	
+	
+	/**
+	 * Returns updated data
+	 */
+	function getUpdatedData()
+	{
+		if ($this->__new_data == null) return [];
+		
+		$res = [];
+		foreach ($this->__new_data as $field_name => $new_value)
+		{
+			if ($this->__old_data == null)
+			{
+				$res[$field_name] = $new_value;
+			}
+			else
+			{
+				if (!array_key_exists($field_name, $this->__old_data))
+				{
+					$res[$field_name] = $new_value;
+				}
+				else
+				{
+					$old_value = $this->__old_data[$field_name];
+					if ($new_value != $old_value)
+					{
+						$res[$field_name] = $new_value;
+					}
+				}
+			}
+		}
+		
+		// var_dump($this->__old_data);
+		// var_dump($this->__new_data);
+		// var_dump($res);
+		
+		return $res;
+	}
+	
+	
+	
+	/**
+	 * Restore field to old value
+	 */
+	function restoreField($field_name)
+	{
+		if ($this->__new_data == null) return;
+		if (!isset($this->__new_data[$field_name])) return;
+		if ($this->__old_data != null)
+		{
+			if (isset($this->__old_data[$field_name]))
+			{
+				$this->__new_data[$field_name] = $this->__old_data[$field_name];
+			}
+			else
+			{
+				unset($this->__new_data[$field_name]);
+			}
+		}
+		else
+		{
+			unset($this->__new_data[$field_name]);
 		}
 	}
 	

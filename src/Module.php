@@ -52,6 +52,7 @@ class Module
 		/* Setup default db connection */
 		$defs["db_connection_list"] = \DI\create(\TinyORM\ConnectionList::class);
 		$defs["db_connection"] = \DI\create(\TinyORM\MySQLConnection::class);
+		$defs["db_query"] = \DI\create(\TinyORM\Query::class);
 		
 		/* Get default connection */
 		$defs["db"] =

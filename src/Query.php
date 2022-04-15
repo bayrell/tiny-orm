@@ -126,12 +126,34 @@ class Query
 	/**
 	 * Select query
 	 */
-	function select($table_name)
+	function select($table_name = "")
 	{
 		$this->_kind = static::QUERY_SELECT;
-		$this->_fields = ["*"];
-		$this->_table_name = $table_name;
+		$this->_fields = ["t.*"];
+		if ($table_name) $this->_table_name = $table_name;
 		$this->_table_name_alias = "t";
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Set table
+	 */
+	function table($table_name = "")
+	{
+		$this->_table_name = $table_name;
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Set table
+	 */
+	function from($table_name = "")
+	{
+		$this->_table_name = $table_name;
 		return $this;
 	}
 	
@@ -140,11 +162,11 @@ class Query
 	/**
 	 * Insert query
 	 */
-	function insert($table_name, $values = [])
+	function insert($table_name = "", $values = [])
 	{
 		$this->_kind = static::QUERY_INSERT;
 		$this->_values = $values;
-		$this->_table_name = $table_name;
+		if ($table_name) $this->_table_name = $table_name;
 		$this->_table_name_alias = "t";
 		return $this;
 	}
@@ -154,11 +176,11 @@ class Query
 	/**
 	 * Select query
 	 */
-	function update($table_name, $values = [])
+	function update($table_name = "", $values = [])
 	{
 		$this->_kind = static::QUERY_UPDATE;
 		$this->_values = $values;
-		$this->_table_name = $table_name;
+		if ($table_name) $this->_table_name = $table_name;
 		$this->_table_name_alias = "t";
 		return $this;
 	}
@@ -168,11 +190,11 @@ class Query
 	/**
 	 * Delete query
 	 */
-	function delete($table_name)
+	function delete($table_name = "")
 	{
 		$this->_kind = static::QUERY_DELETE;
 		$this->_values = $values;
-		$this->_table_name = $table_name;
+		if ($table_name) $this->_table_name = $table_name;
 		$this->_table_name_alias = "t";
 		return $this;
 	}
@@ -196,6 +218,18 @@ class Query
 	function fields($fields)
 	{
 		$this->_fields = $fields;
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Add field
+	 */
+	function addField($field)
+	{
+		if ($this->_fields == null) $this->_fields = [];
+		$this->_fields[] = $field;
 		return $this;
 	}
 	
@@ -253,6 +287,17 @@ class Query
 	function limit($limit)
 	{
 		$this->_limit = $limit;
+		return $this;
+	}
+	
+	
+	
+	/**
+	 * Clear order
+	 */
+	function clearOrder()
+	{
+		$this->_order = [];
 		return $this;
 	}
 	
@@ -466,9 +511,10 @@ class Query
 	{
 		$q = clone $this;
 		$row = $q
-			// ->debug(true)
-			->limit(-1)->start(0)
+			->start(0)
+			->limit(-1)
 			->fields([ "count(*) as c" ])
+			->clearOrder()
 			->one(true)
 		;
 		if ($row) return $row["c"];

@@ -59,6 +59,8 @@ class Cursor
 		if ($this->st == null) return null;
 		$row = $this->st->fetch(\PDO::FETCH_ASSOC);
 		
+		if (!$row) return null;
+		
 		if ($row && $this->query && $this->query->_model_class_name && !$is_raw)
 		{
 			$class_name = $this->query->_model_class_name;
