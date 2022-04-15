@@ -119,7 +119,15 @@ class Model implements \ArrayAccess
 	 */
 	static function to_database($data, $is_update)
 	{
-		return $data;
+		$new_data = [];
+		
+		$fields = array_keys( static::fields() );
+		foreach ($fields as $field_name)
+		{
+			if (isset($data[$field_name])) $new_data[$field_name] = $data[$field_name];
+		}
+		
+		return $new_data;
 	}
 	
 	
@@ -331,8 +339,7 @@ class Model implements \ArrayAccess
 			}
 		}
 		
-		$this->refresh();
-		// $this->setNewData($this->__new_data);
+		$this->setNewData($this->__new_data);
 		
 		return $this;
 	}
@@ -480,10 +487,6 @@ class Model implements \ArrayAccess
 			}
 		}
 		
-		// var_dump($this->__old_data);
-		// var_dump($this->__new_data);
-		// var_dump($res);
-		
 		return $res;
 	}
 	
@@ -511,6 +514,21 @@ class Model implements \ArrayAccess
 		{
 			unset($this->__new_data[$field_name]);
 		}
+	}
+	
+	
+	
+	/**
+	 * Return first primary key
+	 */
+	function getFirstPk()
+	{
+		$pk = static::firstPk();
+		if ($pk != null)
+		{
+			return isset($this->__new_data[$pk]) ? $this->__new_data[$pk] : null;
+		}
+		return null;
 	}
 	
 	
@@ -575,6 +593,7 @@ class Model implements \ArrayAccess
 			$items
 		);
 	}
+	
 	
 	
 	/**
