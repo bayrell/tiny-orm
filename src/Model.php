@@ -548,15 +548,43 @@ class Model implements \ArrayAccess
 	}
 	public function set($key, $value)
 	{
-		if (!$this->__new_data)
+		if (func_num_args() > 2)
 		{
-			$this->__new_data = [];
+			$args = func_get_args();
+			$value = array_pop($args);
+			$this->set($args, $value);
 		}
-		
-		if (!isset($this->__new_data[$key])) $this->__is_dirty = true;
-		else if ($this->__new_data[$key] != $value) $this->__is_dirty = true;
-		
-		$this->__new_data[$key] = $value;
+		else
+		{
+			if (!$this->__new_data)
+			{
+				$this->__new_data = [];
+			}
+			
+			if (gettype($key) == "array")
+			{
+				$sz = count($key);
+				$obj = &$this->__new_data;
+				foreach ($key as $index => $name)
+				{
+					if ($index == $sz - 1)
+					{
+						$obj[$name] = $value;
+					}
+					else
+					{
+						if (!isset($obj[$name])) $obj[$name] = [];
+						$obj = &$obj[$name];
+					}
+				}
+			}
+			else
+			{
+				if (!isset($this->__new_data[$key])) $this->__is_dirty = true;
+				else if ($this->__new_data[$key] != $value) $this->__is_dirty = true;
+				$this->__new_data[$key] = $value;
+			}
+		}
 	}
 	public function exists($key)
 	{
