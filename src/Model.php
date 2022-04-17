@@ -245,7 +245,7 @@ class Model implements \ArrayAccess
 		if ($pk == null) return null;
 		
 		$query = static::selectQuery()
-			->addFilter($pk, "=", $id)
+			->where($pk, "=", $id)
 			->limit(1)
 		;
 		
@@ -262,7 +262,7 @@ class Model implements \ArrayAccess
 	static function findOrCreate($filter, $connection_name = "default")
 	{
 		$item = static::select($connection_name)
-			->filter($filter)
+			->where($filter)
 			->one()
 		;
 		if ($item == null)
@@ -387,7 +387,7 @@ class Model implements \ArrayAccess
 			}
 			
 			$item = static::selectQuery()
-				->where($filter)
+				->setFilter($filter)
 				->one(true)
 			;
 			$item = static::from_database($item);

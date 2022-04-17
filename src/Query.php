@@ -319,7 +319,32 @@ class Query
 	 */
 	function where($filter)
 	{
-		$this->_filter = $filter;
+		$args = func_get_args();
+		$num_args = func_num_args();
+		
+		if ($num_args == 3)
+		{
+			$this->_filter[] = $args;
+		}
+		else if ($num_args == 2)
+		{
+			$this->_filter[] = [$args[0], "=", $args[1]];
+		}
+		else if ($num_args == 1)
+		{
+			foreach ($args[0] as $key => $value)
+			{
+				if (is_numeric($key))
+				{
+					$this->_filter[] = $value;
+				}
+				else
+				{
+					$this->_filter[] = [$key, "=", $value];
+				}
+			}
+		}
+		
 		return $this;
 	}
 	
@@ -328,7 +353,7 @@ class Query
 	/**
 	 * Set filter
 	 */
-	function filter($filter)
+	function setFilter($filter)
 	{
 		$this->_filter = $filter;
 		return $this;
@@ -337,22 +362,11 @@ class Query
 	
 	
 	/**
-	 * Add filter
+	 * Clear filter
 	 */
-	function addFilter($key, $op, $value)
+	function clearFilter()
 	{
-		$this->_filter[] = [$key, $op, $value];
-		return $this;
-	}
-	
-	
-	
-	/**
-	 * Add where
-	 */
-	function addWhere($key, $op, $value)
-	{
-		$this->_filter[] = [$key, $op, $value];
+		$this->_filter = [];
 		return $this;
 	}
 	
