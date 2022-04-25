@@ -124,7 +124,10 @@ class Model implements \ArrayAccess
 		$fields = array_keys( static::fields() );
 		foreach ($fields as $field_name)
 		{
-			if (isset($data[$field_name])) $new_data[$field_name] = $data[$field_name];
+			if (array_key_exists($field_name, $data))
+			{
+				$new_data[$field_name] = $data[$field_name];
+			}
 		}
 		
 		return $new_data;
@@ -479,7 +482,7 @@ class Model implements \ArrayAccess
 				else
 				{
 					$old_value = $this->__old_data[$field_name];
-					if ($new_value != $old_value)
+					if ($new_value !== $old_value)
 					{
 						$res[$field_name] = $new_value;
 					}
