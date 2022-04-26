@@ -488,10 +488,14 @@ class MySQLConnection extends Connection
 	 */
 	function executeQuery($q)
 	{
-		$res = $this->buildSQL($q);
-		if ($res == null) return null;
+		$sql = "";
+		$params = [];
 		
-		list($sql, $params) = $res;
+		$res = $this->buildSQL($q);
+		if ($res != null)
+		{
+			list($sql, $params) = $res;
+		}
 		
 		/* Create cursor */
 		$cursor = new Cursor();
@@ -500,14 +504,17 @@ class MySQLConnection extends Connection
 		$cursor->sql = $sql;
 		$cursor->params = $params;
 		
-		/* Log sql */
-		if ($q->_log)
+		if ($res)
 		{
-			echo $this->getSQL($sql, $params) . "\n";
+			/* Log sql */
+			if ($q->_log)
+			{
+				echo $this->getSQL($sql, $params) . "\n";
+			}
+			
+			/* Execute */
+			$cursor->st = $this->query($sql, $params);
 		}
-		
-		/* Execute */
-		$cursor->st = $this->query($sql, $params);
 		
 		return $cursor;
 	}

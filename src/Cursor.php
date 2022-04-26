@@ -127,7 +127,7 @@ class Cursor
 	 */
 	function rowCount()
 	{
-		return $this->st->rowCount();
+		return $this->st ? $this->st->rowCount() : null;
 	}
 	
 	
