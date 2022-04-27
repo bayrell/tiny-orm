@@ -49,6 +49,7 @@ class Query
 	public $_filter = null;
 	public $_start = 0;
 	public $_limit = -1;
+	public $_count = null;
 	public $_as_record = true;
 	public $_calc_found_rows = false;
 	public $_log = false;
@@ -523,15 +524,42 @@ class Query
 	 */
 	function count()
 	{
-		$q = clone $this;
-		$row = $q
-			->start(0)
-			->limit(-1)
-			->fields([ "count(*) as c" ])
-			->clearOrder()
-			->one(true)
-		;
-		if ($row) return $row["c"];
+		if ($this->_count === null)
+		{
+			$q = clone $this;
+			$row = $q
+				->start(0)
+				->limit(-1)
+				->fields([ "count(*) as c" ])
+				->clearOrder()
+				->one(true)
+			;
+			if ($row) $this->_count = (int)($row["c"]);
+			else $this->_count = 0;
+		}
+		return $this->_count;
+	}
+	
+	
+	
+	/**
+	 * Calc page
+	 */
+	function getPage()
+	{
+		if ($this->_limit > 0) return floor($this->_start / $this->_limit) + 1;
+		return 1;
+	}
+	
+	
+	
+	/**
+	 * Calc pages
+	 */
+	function getPages()
+	{
+		$count = $this->count();
+		if ($this->_limit > 0) return ceil($count / $this->_limit);
 		return 0;
 	}
 	
