@@ -218,7 +218,14 @@ class Query
 	 */
 	function fields($fields)
 	{
-		$this->_fields = $fields;
+		if (gettype($fields) == "array")
+		{
+			$this->_fields = $fields;
+		}
+		else
+		{
+			$this->_fields = func_get_args();
+		}
 		return $this;
 	}
 	
