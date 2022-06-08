@@ -468,7 +468,7 @@ class MySQLConnection extends Connection
 			$where_args = $res[1];
 			
 			/* Delete item */
-			$sql = "delete from " . $q->_table_name . " where " . $where_str . " limit 1";
+			$sql = "delete from " . $q->_table_name . " where " . $where_str;
 			
 			return [$sql, $where_args];
 		}

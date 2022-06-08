@@ -489,7 +489,7 @@ class Query
 		
 		if (!$conn) return null;
 		
-		$res = $conn->buildSQL($q);
+		$res = $conn->buildSQL($this);
 		if (!$res) return null;
 		
 		list($sql, $params) = $res;
