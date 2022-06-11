@@ -73,6 +73,7 @@ class MySQLConnection extends Connection
 		{
 			$this->connect_error = $e->getMessage();
 		}
+		return $this;
 	}
 	
 	
@@ -208,9 +209,9 @@ class MySQLConnection extends Connection
 		if ($update == null) $update = $insert;
 		
 		/* Build where */
-		$res = $this->convertFilter($where);
+		$res = $this->convertFilter($search);
 		$where_str = implode(" AND ", $res[0]);
-		$where_args = array_merge($params, $res[1]);
+		$where_args = $res[1];
 		
 		/* Find item */
 		$sql = "select * from $table_name where $where_str limit 1";

@@ -262,15 +262,19 @@ class Model implements \ArrayAccess
 	/**
 	 * Find or create
 	 */
-	static function findOrCreate($filter, $connection_name = "default")
+	static function findOrCreate($item_data, $connection_name = "default")
 	{
-		$item = static::select($connection_name)
-			->where($filter)
+		$item = static::selectQuery($connection_name)
+			->where($item_data)
 			->one()
 		;
 		if ($item == null)
 		{
 			$item = static::Instance();
+			foreach ($item_data as $key => $value)
+			{
+				$item->$key = $value;
+			}
 		}
 		return $item;
 	}
