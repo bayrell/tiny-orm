@@ -194,7 +194,6 @@ class Query
 	function delete($table_name = "")
 	{
 		$this->_kind = static::QUERY_DELETE;
-		$this->_values = $values;
 		if ($table_name) $this->_table_name = $table_name;
 		$this->_table_name_alias = "t";
 		return $this;
