@@ -260,6 +260,20 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Find item
+	 */
+	static function findItem($item_data, $connection_name = "default")
+	{
+		$item = static::selectQuery($connection_name)
+			->where($item_data)
+			->one()
+		;
+		return $item;
+	}
+	
+	
+	
+	/**
 	 * Find or create
 	 */
 	static function findOrCreate($item_data, $connection_name = "default")
