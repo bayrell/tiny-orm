@@ -337,7 +337,7 @@ class Query
 		{
 			$this->_filter[] = [$args[0], "=", $args[1]];
 		}
-		else if ($num_args == 1)
+		else if ($num_args == 1 && gettype($args[0]) == "array")
 		{
 			foreach ($args[0] as $key => $value)
 			{

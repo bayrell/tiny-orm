@@ -296,6 +296,77 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Sync database
+	 */
+	static function sync($new_data, $filter = null)
+	{
+		$pk = static::pk();
+		
+		$old_data = static::selectQuery()
+			->where($filter)
+			->all()
+		;
+		
+		foreach ($new_data as $new_value)
+		{
+			$find = false;
+			foreach ($old_data as $old_value)
+			{
+				$old_value_item = $old_value->toArray();
+				$find = UtilsORM::object_is_equal($new_value, $old_value_item, $pk);
+				if ($find)
+				{
+					$find_value = $old_value;
+					break;
+				}
+			}
+			
+			/* Create item */
+			if (!$find)
+			{
+				$item = static::Instance();
+				$item->setData($new_value);
+				$item->save();
+			}
+			
+			/* Update item if changed */
+			else
+			{
+				$old_value_item = $old_value->toArray();
+				$is_equal = UtilsORM::object_is_equal($new_value, $old_value_item);
+				if (!$is_equal)
+				{
+					$old_value->setData($new_value);
+					$old_value->save();
+				}
+			}
+		}
+		
+		foreach ($old_data as $old_value)
+		{
+			$find = false;
+			foreach ($new_data as $new_value)
+			{
+				$old_value_item = $old_value->toArray();
+				$find = UtilsORM::object_is_equal($new_value, $old_value_item, $pk);
+				if ($find)
+				{
+					$find_value = $old_value;
+					break;
+				}
+			}
+			
+			/* Delete item */
+			if (!$find)
+			{
+				$old_value->delete();
+			}
+		}
+	}
+	
+	
+	
+	/**
 	 * Save to database
 	 */
 	function save($connection_name = "default")
@@ -311,6 +382,7 @@ class Model implements \ArrayAccess
 		{
 			if (count($new_data) > 0)
 			{
+				//var_dump($new_data);
 				$primary_data = static::getPrimaryData($this->__old_data);
 				if ($primary_data)
 				{
@@ -457,6 +529,21 @@ class Model implements \ArrayAccess
 	function isDirty()
 	{
 		return $this->__is_dirty;
+	}
+	
+	
+	
+	/**
+	 * Set data
+	 */
+	function setData($data)
+	{
+		$this->__is_dirty = true;
+		$this->__new_data = $data;
+		if ($this->__new_data == null)
+		{
+			$this->__new_data = [];
+		}
 	}
 	
 	
