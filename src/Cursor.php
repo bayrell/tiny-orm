@@ -61,10 +61,18 @@ class Cursor
 		
 		if (!$row) return null;
 		
-		if ($row && $this->query && $this->query->_model_class_name && !$is_raw)
+		if ($row && $this->query && $this->query->_model_class_name)
 		{
-			$class_name = $this->query->_model_class_name;
-			$row = $class_name::InstanceFromDatabase($row);
+			if ($is_raw)
+			{
+				$class_name = $this->query->_model_class_name;
+				$row = $class_name::from_database($row);
+			}
+			else
+			{
+				$class_name = $this->query->_model_class_name;
+				$row = $class_name::InstanceFromDatabase($row);
+			}
 		}
 		
 		return $row;
@@ -80,15 +88,21 @@ class Cursor
 		if ($this->st == null) return [];
 		$items = $this->st->fetchAll(\PDO::FETCH_ASSOC);
 		
-		if ($this->query && $this->query->_model_class_name && !$is_raw)
+		if ($this->query && $this->query->_model_class_name)
 		{
 			$class_name = $this->query->_model_class_name;
 			
 			$items = array_map(
-				function ($item) use ($class_name)
+				function ($item) use ($class_name, $is_raw)
 				{
-					$item = $class_name::from_database($item);
-					$item = $class_name::Instance($item);
+					if ($is_raw)
+					{
+						$item = $class_name::from_database($item);
+					}
+					else
+					{
+						$item = $class_name::InstanceFromDatabase($item);
+					}
 					return $item;
 				},
 				$items
