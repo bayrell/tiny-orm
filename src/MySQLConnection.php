@@ -346,7 +346,7 @@ class MySQLConnection extends Connection
 			if ($q->_calc_found_rows == true) $sql .= " SQL_CALC_FOUND_ROWS ";
 			
 			/* Add fields */
-			if ($q->_fields != null) $sql .= implode(", ", array_map($this->escape, $q->_fields));
+			if ($q->_fields != null) $sql .= implode(", ", $q->_fields);
 			else $sql .= " * ";
 			
 			/* New line */

@@ -194,7 +194,6 @@ class Query
 	function delete($table_name = "")
 	{
 		$this->_kind = static::QUERY_DELETE;
-		$this->_values = $values;
 		if ($table_name) $this->_table_name = $table_name;
 		$this->_table_name_alias = "t";
 		return $this;
@@ -338,7 +337,7 @@ class Query
 		{
 			$this->_filter[] = [$args[0], "=", $args[1]];
 		}
-		else if ($num_args == 1)
+		else if ($num_args == 1 && gettype($args[0]) == "array")
 		{
 			foreach ($args[0] as $key => $value)
 			{
