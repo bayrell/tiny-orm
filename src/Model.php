@@ -115,6 +115,31 @@ class Model implements \ArrayAccess
 	
 	
 	/**
+	 * Return first primary key
+	 */
+	function getFirstPk()
+	{
+		$pk = static::firstPk();
+		if ($pk != null)
+		{
+			return isset($this->__new_data[$pk]) ? $this->__new_data[$pk] : null;
+		}
+		return null;
+	}
+	
+	
+	
+	/**
+	 * Return first primary key
+	 */
+	function getPk()
+	{
+		return $this->getPrimaryData( $this->__new_data );
+	}
+	
+	
+	
+	/**
 	 * To database
 	 */
 	static function to_database($data, $is_update)
@@ -622,21 +647,6 @@ class Model implements \ArrayAccess
 		{
 			unset($this->__new_data[$field_name]);
 		}
-	}
-	
-	
-	
-	/**
-	 * Return first primary key
-	 */
-	function getFirstPk()
-	{
-		$pk = static::firstPk();
-		if ($pk != null)
-		{
-			return isset($this->__new_data[$pk]) ? $this->__new_data[$pk] : null;
-		}
-		return null;
 	}
 	
 	

@@ -322,37 +322,29 @@ class Query
 	
 	
 	/**
-	 * Set filter
+	 * Add where
 	 */
-	function where($filter)
+	static function addWhere($filter, $key, $op, $value)
 	{
-		$args = func_get_args();
-		$num_args = func_num_args();
-		
-		if ($num_args == 3)
+		$index = -1;
+		foreach ($filter as $k => $arr)
 		{
-			$this->_filter[] = $args;
-		}
-		else if ($num_args == 2)
-		{
-			$this->_filter[] = [$args[0], "=", $args[1]];
-		}
-		else if ($num_args == 1 && gettype($args[0]) == "array")
-		{
-			foreach ($args[0] as $key => $value)
+			if ($arr[0] == $key && $arr[1] == "=")
 			{
-				if (is_numeric($key))
-				{
-					$this->_filter[] = $value;
-				}
-				else
-				{
-					$this->_filter[] = [$key, "=", $value];
-				}
+				$index = $k;
+				break;
 			}
 		}
+		if ($index == -1)
+		{
+			$filter[] = [$key, $op, $value];
+		}
+		else
+		{
+			$filter[$index] = [$key, $op, $value];
+		}
 		
-		return $this;
+		return $filter;
 	}
 	
 	
@@ -360,9 +352,39 @@ class Query
 	/**
 	 * Set filter
 	 */
-	function setFilter($filter)
+	function where($filter)
 	{
-		$this->_filter = $filter;
+		$args = func_get_args();
+		$num_args = func_num_args();
+		
+		if ($this->_filter == null)
+		{
+			$this->_filter = [];
+		}
+		
+		if ($num_args == 3)
+		{
+			$this->_filter = static::addWhere($this->_filter, $args[0], $args[1], $args[2]);
+		}
+		else if ($num_args == 2)
+		{
+			$this->_filter = static::addWhere($this->_filter, $args[0], "=", $args[1]);
+		}
+		else if ($num_args == 1 && gettype($args[0]) == "array")
+		{
+			foreach ($args[0] as $key => $value)
+			{
+				if (is_numeric($key))
+				{
+					call_user_func_array([$this, "where"], $value);
+				}
+				else
+				{
+					$this->_filter = static::addWhere($this->_filter, $key, "=", $value);
+				}
+			}
+		}
+		
 		return $this;
 	}
 	
