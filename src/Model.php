@@ -735,9 +735,14 @@ class Model implements \ArrayAccess
 	/**
 	 * To array
 	 */
-	function toArray()
+	function toArray($fields = null)
 	{
-		return $this->__new_data ? $this->__new_data : [];
+		$data = $this->__new_data ? $this->__new_data : [];
+		if ($fields)
+		{
+			$data = UtilsORM::object_intersect($data, $fields);
+		}
+		return $data;
 	}
 	
 	
