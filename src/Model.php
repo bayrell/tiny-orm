@@ -323,14 +323,27 @@ class Model implements \ArrayAccess
 	/**
 	 * Sync database
 	 */
-	static function sync($new_data, $filter = null)
+	static function sync($new_data, $params = null)
 	{
 		$pk = static::pk();
 		
-		$old_data = static::selectQuery()
-			->where($filter)
-			->all()
+		$filter = ($params && isset($params["filter"])) ?
+			$params["filter"] : null
 		;
+		$buildSearchQuery = ($params && isset($params["buildSearchQuery"])) ?
+			$params["buildSearchQuery"] : null
+		;
+		
+		$q = static::selectQuery()
+			->where($filter)
+		;
+		
+		if ($buildSearchQuery)
+		{
+			$q = $buildSearchQuery($q);
+		}
+		
+		$old_data = $q->all();
 		
 		foreach ($new_data as $new_value)
 		{
@@ -351,6 +364,7 @@ class Model implements \ArrayAccess
 			{
 				$item = static::Instance();
 				$item->setData($new_value);
+				//var_dump($item);
 				$item->save();
 			}
 			
