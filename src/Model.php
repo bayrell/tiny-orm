@@ -519,7 +519,7 @@ class Model implements \ArrayAccess
 			}
 			
 			$item = static::selectQuery()
-				->setFilter($filter)
+				->where($filter)
 				->one(true)
 			;
 			$item = static::from_database($item);
