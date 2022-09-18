@@ -1,16 +1,20 @@
 {
-    "name": "tiny-php/orm",
-    "type": "library",
-    "description": "TinyPHP Framework. ORM library",
-    "keywords": ["tiny-php"],
-    "homepage": "https://github.com/tiny-php/orm",
-    "license": "MIT",
+	"name": "tiny-php/orm",
+	"type": "library",
+	"version": "1.0.0",
+	"description": "TinyPHP Framework. ORM library",
+	"keywords": ["tiny-php"],
+	"homepage": "https://github.com/tiny-php/orm",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Ildar Bikmamatov",
+			"email": "ildar@bayrell.org"
+		}
+	],
 	"autoload": {
 		"psr-4": {
 			"TinyORM\\": "src"
 		}
-	},
-    "require": {
-        "tiny-php/core": "^1.0"
-    }
+	}
 }
